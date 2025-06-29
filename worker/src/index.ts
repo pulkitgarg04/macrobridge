@@ -1,5 +1,5 @@
 import { Kafka } from "kafkajs";
-import { TOPIC_NAME } from "@macrobridge/constants";
+import { TOPIC_NAME } from "./constants";
 
 const kafka = new Kafka({
     clientId: "outbox-processor",

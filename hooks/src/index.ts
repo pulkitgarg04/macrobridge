@@ -1,23 +1,19 @@
-import express, { Request, Response } from "express";
-import { PrismaClient } from "@macrobridge/db";
+import express, { RequestHandler } from "express";
+import prisma from "./db";
 
 const app = express();
-app.use(express.json())
+app.use(express.json());
 
-const client = new PrismaClient();
-
-app.post(
-  "/hooks/catch/:userId/:zapId",
-  async (req: Request, res: Response) => {
-    const userId = req.params.userId;
-    const zapId = req.params.zapId;
+const webhookHandler: RequestHandler = async (req, res) => {
+  try {
+    const { userId, zapId } = req.params as { userId: string; zapId: string };
     const body = req.body;
 
-    await client.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx) => {
       const run = await tx.zapRun.create({
         data: {
           zapId,
-          metadata: body
+          metadata: body,
         },
       });
 
@@ -28,12 +24,17 @@ app.post(
       });
     });
 
-    return res.json({
-      message: "Webhook recieved"
-    })
+    res.json({
+      message: "Webhook received",
+    });
+  } catch (error) {
+    console.error("Error handling webhook:", error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
-);
+};
+
+app.post("/hooks/catch/:userId/:zapId", webhookHandler);
 
 app.listen(8002, () => {
-    console.log("Server is listening on port 8002")
-})
+  console.log("Server is listening on port 8002");
+});
