@@ -120,3 +120,23 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* MacroBridge custom text selection color */
+::selection {
+  background: #F97315;
+  color: #fff;
+}
+
+::-moz-selection {
+  background: #F97315;
+  color: #fff;
+}
+
+html ::selection {
+  background: #F97315 !important;
+  color: #fff !important;
+}
+html ::-moz-selection {
+  background: #F97315 !important;
+  color: #fff !important;
+}
