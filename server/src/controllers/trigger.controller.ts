@@ -5,8 +5,10 @@ export const getAvailableTrigger: RequestHandler = async (req, res) => {
   try {
     const availableTriggers = await prisma.availableTrigger.findMany({});
     res.status(200).json({ availableTriggers });
+    return;
   } catch (error: any) {
     res.status(500).json({ error: error.message });
+    return;
   }
 };
 
@@ -23,8 +25,10 @@ export const getTriggerById: RequestHandler = async (req, res) => {
     }
 
     res.status(200).json({ trigger });
+    return;
   } catch (error: any) {
     res.status(500).json({ error: error.message });
+    return;
   }
 };
 
@@ -45,8 +49,10 @@ export const createTrigger: RequestHandler = async (req, res) => {
     });
 
     res.status(201).json({ trigger });
+    return;
   } catch (error: any) {
     res.status(500).json({ error: error.message });
+    return;
   }
 };
 
@@ -73,8 +79,10 @@ export const updateTrigger: RequestHandler = async (req, res) => {
     });
 
     res.status(200).json({ trigger });
+    return;
   } catch (error: any) {
     res.status(500).json({ error: error.message });
+    return;
   }
 };
 
@@ -96,7 +104,9 @@ export const deleteTrigger: RequestHandler = async (req, res) => {
     });
 
     res.status(200).json({ message: "Trigger deleted successfully" });
+    return;
   } catch (error: any) {
     res.status(500).json({ error: error.message });
+    return;
   }
 };

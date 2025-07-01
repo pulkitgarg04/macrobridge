@@ -17,113 +17,22 @@ import {
   Workflow,
   ArrowRight,
   Plus,
-  Mail,
-  MessageSquare,
-  Calendar,
-  Database,
-  Webhook,
-  FileText,
-  Users,
-  ShoppingCart,
   X,
-  Settings,
-  Play,
   Save,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
+import axios from "axios";
 
-const availableTriggers = [
-  {
-    id: "gmail",
-    name: "Gmail",
-    description: "New Email",
-    icon: Mail,
-    service: "Gmail",
-    color: "bg-red-500",
-  },
-  {
-    id: "webhook",
-    name: "Webhook",
-    description: "Receive HTTP Request",
-    icon: Webhook,
-    service: "Webhook",
-    color: "bg-blue-500",
-  },
-  {
-    id: "calendar",
-    name: "Google Calendar",
-    description: "New Event",
-    icon: Calendar,
-    service: "Google Calendar",
-    color: "bg-green-500",
-  },
-  {
-    id: "form",
-    name: "Form Submit",
-    description: "New Form Submission",
-    icon: FileText,
-    service: "Forms",
-    color: "bg-purple-500",
-  },
-];
-
-const availableActions = [
-  {
-    id: "slack",
-    name: "Slack",
-    description: "Send Message",
-    icon: MessageSquare,
-    service: "Slack",
-    color: "bg-purple-600",
-  },
-  {
-    id: "discord",
-    name: "Discord",
-    description: "Send Message",
-    icon: MessageSquare,
-    service: "Discord",
-    color: "bg-indigo-600",
-  },
-  {
-    id: "hubspot",
-    name: "HubSpot",
-    description: "Create Contact",
-    icon: Users,
-    service: "HubSpot",
-    color: "bg-orange-600",
-  },
-  {
-    id: "airtable",
-    name: "Airtable",
-    description: "Create Record",
-    icon: Database,
-    service: "Airtable",
-    color: "bg-yellow-600",
-  },
-  {
-    id: "shopify",
-    name: "Shopify",
-    description: "Create Product",
-    icon: ShoppingCart,
-    service: "Shopify",
-    color: "bg-green-600",
-  },
-  {
-    id: "email",
-    name: "Email",
-    description: "Send Email",
-    icon: Mail,
-    service: "Email",
-    color: "bg-blue-600",
-  },
-];
+const SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:8000";
 
 interface WorkflowStep {
   id: string;
   type: "trigger" | "action";
   app: any;
   position: { x: number; y: number };
+  metadata?: Record<string, string>;
 }
 
 export default function CreateWorkflowPage() {
@@ -135,6 +44,39 @@ export default function CreateWorkflowPage() {
     stepId?: string;
   } | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
+  const [availableTriggers, setAvailableTriggers] = useState<any[]>([]);
+  const [availableActions, setAvailableActions] = useState<any[]>([]);
+  const [triggersLoading, setTriggersLoading] = useState(true);
+  const [actionsLoading, setActionsLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchTriggers() {
+      setTriggersLoading(true);
+      try {
+        const res = await fetch(`${SERVER_URL}/api/v1/trigger/available`);
+        const data = await res.json();
+        setAvailableTriggers(data.availableTriggers || []);
+      } catch (err) {
+        setAvailableTriggers([]);
+      }
+      setTriggersLoading(false);
+    }
+    async function fetchActions() {
+      setActionsLoading(true);
+      try {
+        const res = await fetch(`${SERVER_URL}/api/v1/action/available`);
+        const data = await res.json();
+        setAvailableActions(data.availableActions || []);
+      } catch (err) {
+        setAvailableActions([]);
+      }
+      setActionsLoading(false);
+    }
+    fetchTriggers();
+    fetchActions();
+  }, []);
 
   const handleDragStart = (
     e: React.DragEvent,
@@ -162,6 +104,7 @@ export default function CreateWorkflowPage() {
         type: draggedItem.type,
         app: draggedItem,
         position: { x: Math.max(0, x - 100), y: Math.max(0, y - 50) },
+        metadata: {},
       };
 
       setWorkflowSteps((prev) => [...prev, newStep]);
@@ -178,19 +121,54 @@ export default function CreateWorkflowPage() {
     setShowAppSelector({ type });
   };
 
-  const selectApp = (app: any, type: "trigger" | "action") => {
-    const newStep: WorkflowStep = {
-      id: `${type}-${Date.now()}`,
-      type,
-      app,
-      position: { x: 100 + workflowSteps.length * 200, y: 100 },
-    };
-    setWorkflowSteps((prev) => [...prev, newStep]);
-    setShowAppSelector(null);
-  };
-
   const triggerSteps = workflowSteps.filter((step) => step.type === "trigger");
   const actionSteps = workflowSteps.filter((step) => step.type === "action");
+
+  const handleSaveZap = async () => {
+    setSaving(true);
+    setError(null);
+    try {
+      const triggerStep = workflowSteps.find((step) => step.type === "trigger");
+      const actionSteps = workflowSteps.filter((step) => step.type === "action");
+
+      if (!triggerStep) {
+        setError("Please add a trigger.");
+        setSaving(false);
+        return;
+      }
+      if (actionSteps.length === 0) {
+        setError("Please add at least one action.");
+        setSaving(false);
+        return;
+      }
+
+      const payload = {
+        name: workflowName,
+        availableTriggerId: triggerStep.app.id,
+        actions: actionSteps.map((step) => ({
+          availableActionId: step.app.id,
+          actionMetadata: step.metadata || {},
+        })),
+      };
+
+      await axios.post(
+        `${SERVER_URL}/api/v1/zap`,
+        payload,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
+        }
+      );
+
+      window.location.href = "/dashboard";
+    } catch (err: any) {
+      setError(err.response?.data?.error || err.message || "An error occurred");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-black">
@@ -213,23 +191,23 @@ export default function CreateWorkflowPage() {
             </div>
             <div className="flex items-center space-x-3">
               <Button
-                variant="ghost"
-                className="text-gray-400 hover:text-white"
+                className="bg-[#F97315] hover:bg-[#EA580C] text-white"
+                onClick={handleSaveZap}
+                disabled={saving}
               >
-                <Settings className="h-4 w-4 mr-2" />
-                Settings
+                {saving ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-2" />
+                    Save Zap
+                  </>
+                )}
               </Button>
-              <Button
-                variant="outline"
-                className="border-gray-700 text-gray-300 hover:bg-gray-800 bg-transparent"
-              >
-                <Save className="h-4 w-4 mr-2" />
-                Save Draft
-              </Button>
-              <Button className="bg-[#F97315] hover:bg-[#EA580C] text-white">
-                <Play className="h-4 w-4 mr-2" />
-                Test Zap
-              </Button>
+              {error && <div className="text-red-500 mt-2">{error}</div>}
               <Link href="/dashboard">
                 <Button
                   variant="ghost"
@@ -255,28 +233,27 @@ export default function CreateWorkflowPage() {
                 Triggers
               </h3>
               <div className="space-y-3">
-                {availableTriggers.map((trigger) => (
-                  <div
-                    key={trigger.id}
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, trigger, "trigger")}
-                    className="flex items-center space-x-3 p-3 bg-gray-800 rounded-lg cursor-grab hover:bg-gray-750 transition-colors"
-                  >
-                    <div
-                      className={`w-10 h-10 ${trigger.color} rounded-lg flex items-center justify-center`}
-                    >
-                      <trigger.icon className="h-5 w-5 text-white" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-white truncate">
-                        {trigger.name}
-                      </p>
-                      <p className="text-xs text-gray-400 truncate">
-                        {trigger.description}
-                      </p>
-                    </div>
+                {triggersLoading ? (
+                  <div className="flex justify-center py-6">
+                    <Loader2 className="animate-spin text-gray-400 h-6 w-6" />
                   </div>
-                ))}
+                ) : (
+                  availableTriggers.map((trigger) => (
+                    <div
+                      key={trigger.id}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, trigger, "trigger")}
+                      className="flex items-center space-x-3 p-3 bg-gray-800 rounded-lg cursor-grab hover:bg-gray-750 transition-colors"
+                    >
+                      <img src={trigger.image} alt={trigger.name} className="w-10 h-10 rounded-lg" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-white truncate">
+                          {trigger.name}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
 
@@ -285,28 +262,27 @@ export default function CreateWorkflowPage() {
                 Actions
               </h3>
               <div className="space-y-3">
-                {availableActions.map((action) => (
-                  <div
-                    key={action.id}
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, action, "action")}
-                    className="flex items-center space-x-3 p-3 bg-gray-800 rounded-lg cursor-grab hover:bg-gray-750 transition-colors"
-                  >
-                    <div
-                      className={`w-10 h-10 ${action.color} rounded-lg flex items-center justify-center`}
-                    >
-                      <action.icon className="h-5 w-5 text-white" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-white truncate">
-                        {action.name}
-                      </p>
-                      <p className="text-xs text-gray-400 truncate">
-                        {action.description}
-                      </p>
-                    </div>
+                {actionsLoading ? (
+                  <div className="flex justify-center py-6">
+                    <Loader2 className="animate-spin text-gray-400 h-6 w-6" />
                   </div>
-                ))}
+                ) : (
+                  availableActions.map((action) => (
+                    <div
+                      key={action.id}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, action, "action")}
+                      className="flex items-center space-x-3 p-3 bg-gray-800 rounded-lg cursor-grab hover:bg-gray-750 transition-colors"
+                    >
+                      <img src={action.image} alt={action.name} className="w-10 h-10 rounded-lg" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-white truncate">
+                          {action.name}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>
@@ -363,7 +339,7 @@ export default function CreateWorkflowPage() {
                           <Card className="w-64 border-gray-700 bg-gray-800">
                             <CardContent className="p-4">
                               <div className="flex items-center justify-between mb-3">
-                                <Badge className="bg-[#F97315]/20 text-[#F97315] border-[#F97315]/30">
+                                <Badge className="bg-[#F97315]/20 text-white border-[#F97315]/30">
                                   Trigger
                                 </Badge>
                                 <Button
@@ -386,9 +362,6 @@ export default function CreateWorkflowPage() {
                                 <div className="flex-1 min-w-0">
                                   <p className="font-medium text-white">
                                     {triggerSteps[0].app.name}
-                                  </p>
-                                  <p className="text-sm text-gray-400">
-                                    {triggerSteps[0].app.description}
                                   </p>
                                 </div>
                               </div>
@@ -449,11 +422,74 @@ export default function CreateWorkflowPage() {
                                   <p className="font-medium text-white">
                                     {step.app.name}
                                   </p>
-                                  <p className="text-sm text-gray-400">
-                                    {step.app.description}
-                                  </p>
                                 </div>
                               </div>
+                              <form className="space-y-2 mt-4">
+                                {step.app.name === "Send Email" && (
+                                  <>
+                                    <div>
+                                      <Label htmlFor={`email-${step.id}`} className="text-white text-xs">Email</Label>
+                                      <Input
+                                        id={`email-${step.id}`}
+                                        type="email"
+                                        placeholder="Recipient email"
+                                        className="mt-4 bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-[#F97315] focus:ring-[#F97315]"
+                                        value={step.metadata?.email || ""}
+                                        onChange={e => {
+                                          const email = e.target.value;
+                                          setWorkflowSteps(steps => steps.map(s => s.id === step.id ? { ...s, metadata: { ...s.metadata, email } } : s));
+                                        }}
+                                      />
+                                    </div>
+                                    <div>
+                                      <Label htmlFor={`body-${step.id}`} className="text-white text-xs">Body</Label>
+                                      <Input
+                                        id={`body-${step.id}`}
+                                        type="text"
+                                        placeholder="Email body"
+                                        className="mt-4 bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-[#F97315] focus:ring-[#F97315]"
+                                        value={step.metadata?.body || ""}
+                                        onChange={e => {
+                                          const body = e.target.value;
+                                          setWorkflowSteps(steps => steps.map(s => s.id === step.id ? { ...s, metadata: { ...s.metadata, body } } : s));
+                                        }}
+                                      />
+                                    </div>
+                                  </>
+                                )}
+                                {step.app.name === "Send Sol" && (
+                                  <>
+                                    <div>
+                                      <Label htmlFor={`to-${step.id}`} className="text-white text-xs">Recipient</Label>
+                                      <Input
+                                        id={`to-${step.id}`}
+                                        type="text"
+                                        placeholder="Recipient address"
+                                        className="mt-4 bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-[#F97315] focus:ring-[#F97315]"
+                                        value={step.metadata?.to || ""}
+                                        onChange={e => {
+                                          const to = e.target.value;
+                                          setWorkflowSteps(steps => steps.map(s => s.id === step.id ? { ...s, metadata: { ...s.metadata, to } } : s));
+                                        }}
+                                      />
+                                    </div>
+                                    <div>
+                                      <Label htmlFor={`amount-${step.id}`} className="text-white text-xs">Amount</Label>
+                                      <Input
+                                        id={`amount-${step.id}`}
+                                        type="number"
+                                        placeholder="Amount"
+                                        className="mt-4 bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-[#F97315] focus:ring-[#F97315]"
+                                        value={step.metadata?.amount || ""}
+                                        onChange={e => {
+                                          const amount = e.target.value;
+                                          setWorkflowSteps(steps => steps.map(s => s.id === step.id ? { ...s, metadata: { ...s.metadata, amount } } : s));
+                                        }}
+                                      />
+                                    </div>
+                                  </>
+                                )}
+                              </form>
                             </CardContent>
                           </Card>
                         </div>
@@ -542,57 +578,6 @@ export default function CreateWorkflowPage() {
           </div>
         </div>
       </div>
-
-      {showAppSelector && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <Card className="w-96 border-gray-700 bg-gray-800">
-            <CardHeader>
-              <CardTitle className="text-white">
-                Choose{" "}
-                {showAppSelector.type === "trigger" ? "Trigger" : "Action"}
-              </CardTitle>
-              <CardDescription className="text-gray-400">
-                Select an app to{" "}
-                {showAppSelector.type === "trigger"
-                  ? "trigger"
-                  : "perform an action in"}{" "}
-                your workflow
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3 max-h-96 overflow-y-auto">
-              {(showAppSelector.type === "trigger"
-                ? availableTriggers
-                : availableActions
-              ).map((app) => (
-                <button
-                  key={app.id}
-                  onClick={() => selectApp(app, showAppSelector.type)}
-                  className="w-full flex items-center space-x-3 p-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors"
-                >
-                  <div
-                    className={`w-10 h-10 ${app.color} rounded-lg flex items-center justify-center`}
-                  >
-                    {app.icon && <app.icon className="h-5 w-5 text-white" />}
-                  </div>
-                  <div className="flex-1 text-left">
-                    <p className="font-medium text-white">{app.name}</p>
-                    <p className="text-sm text-gray-400">{app.description}</p>
-                  </div>
-                </button>
-              ))}
-            </CardContent>
-            <div className="p-6 pt-0">
-              <Button
-                variant="ghost"
-                onClick={() => setShowAppSelector(null)}
-                className="w-full text-gray-400 hover:text-white"
-              >
-                Cancel
-              </Button>
-            </div>
-          </Card>
-        </div>
-      )}
     </div>
   );
 }

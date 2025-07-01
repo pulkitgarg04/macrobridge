@@ -4,9 +4,9 @@ import { RequestHandler } from "express";
 
 export const createZapHandler: RequestHandler = async (req, res) => {
   // @ts-ignore
-  const userId: number = parseInt(req.id);
+  const userId = req.id;
   
-  if (isNaN(userId)) {
+  if (!userId) {
     res.status(401).json({ error: "Invalid user ID" });
     return;
   }
@@ -84,17 +84,18 @@ export const createZapHandler: RequestHandler = async (req, res) => {
     res.status(200).json({
       zapId,
     });
+    return;
   } catch (error: any) {
     console.error("Error creating zap:", error);
     res.status(500).json({ error: error.message });
+    return;
   }
 };
 
 export const getZapsHandler: RequestHandler = async (req, res) => {
   // @ts-ignore
-  const userId: number = parseInt(req.id);
-  
-  if (isNaN(userId)) {
+  const userId = req.id;
+  if (!userId) {
     res.status(401).json({ error: "Invalid user ID" });
     return;
   }
@@ -118,13 +119,13 @@ export const getZapsHandler: RequestHandler = async (req, res) => {
   });
 
   res.status(200).json({ zaps });
+  return;
 };
 
 export const getZapHandler: RequestHandler = async (req, res) => {
   // @ts-ignore
-  const userId: number = parseInt(req.id);
-  
-  if (isNaN(userId)) {
+  const userId = req.id;
+  if (!userId) {
     res.status(401).json({ error: "Invalid user ID" });
     return;
   }
@@ -151,4 +152,5 @@ export const getZapHandler: RequestHandler = async (req, res) => {
   });
 
   res.status(200).json({ zap });
+  return;
 };
