@@ -15,31 +15,11 @@ datasource db {
 }
 
 model User {
-  id              Int               @id @default(autoincrement())
-  name            String
-  email           String            @unique
-  password        String
-  zaps            Zap[]
-  ExternalAppUser ExternalAppUser[]
-}
-
-model ExternalApp {
-  id    String            @id @default(uuid())
-  name  String
-  users ExternalAppUser[]
-}
-
-model ExternalAppUser {
-  id            String      @id @default(uuid())
-  userId        Int
-  externalAppId String
-  accessToken   String
-  refreshToken  String
-  expiresAt     DateTime
-  user          User        @relation(fields: [userId], references: [id])
-  externalApp   ExternalApp @relation(fields: [externalAppId], references: [id])
-
-  @@unique([userId, externalAppId])
+  id       Int    @id @default(autoincrement())
+  name     String
+  email    String
+  password String
+  zaps     Zap[]
 }
 
 model Zap {
@@ -72,12 +52,10 @@ model Action {
 }
 
 model AvailableAction {
-  id         String   @id @default(uuid())
-  name       String
-  image      String
-  service    String
-  actionType String
-  actions    Action[]
+  id      String   @id @default(uuid())
+  name    String
+  image   String
+  actions Action[]
 }
 
 model AvailableTrigger {
@@ -98,6 +76,5 @@ model ZapRun {
 model ZapRunOutbox {
   id       String @id @default(uuid())
   zapRunId String @unique
-  status   String
   zapRun   ZapRun @relation(fields: [zapRunId], references: [id])
 }

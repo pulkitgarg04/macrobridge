@@ -22,6 +22,9 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import Cookies from 'js-cookie';
+
+const SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:8000";
 
 export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -30,31 +33,52 @@ export default function SignupPage() {
   const [emailError, setEmailError] = useState("");
   const [password, setPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [name, setName] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+    setLoading(true);
+    setError("");
+    setEmailError("");
+    setPasswordError("");
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
-
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/;
     let valid = true;
-
     if (!emailRegex.test(email)) {
       setEmailError("Please enter a valid email address.");
       valid = false;
-    } else {
-      setEmailError("");
     }
-
     if (!passwordRegex.test(password)) {
       setPasswordError("Password must be at least 8 characters, include a letter and a number.");
       valid = false;
-    } else {
-      setPasswordError("");
     }
-
-    if (valid) {
-      alert("Signup successful!");
+    if (!name) {
+      setError("Name is required.");
+      valid = false;
+    }
+    if (!valid) {
+      setLoading(false);
+      return;
+    }
+    try {
+      const res = await fetch(`${SERVER_URL}/api/v1/user/signup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || data.message || "Signup failed");
+      } else {
+        Cookies.set('token', data.token, { expires: 7 });
+        window.location.href = "/dashboard";
+      }
+    } catch (err) {
+      setError("Network error. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -180,6 +204,8 @@ export default function SignupPage() {
                   type="text"
                   placeholder="Enter your full name"
                   className="bg-gray-800 border-gray-700 text-white placeholder-gray-400 focus:border-[#F97315] focus:ring-[#F97315]"
+                  value={name}
+                  onChange={e => setName(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
@@ -276,10 +302,11 @@ export default function SignupPage() {
                 </Label>
               </div>
 
-              <Button className="w-full bg-[#F97315] hover:bg-[#EA580C] text-white cursor-pointer">
-                Create Account
-                <ArrowRight className="ml-2 h-4 w-4" />
+              <Button className="w-full bg-[#F97315] hover:bg-[#EA580C] text-white cursor-pointer" onClick={handleSubmit} disabled={loading}>
+                {loading ? "Creating Account..." : <>Create Account<ArrowRight className="ml-2 h-4 w-4" /></>}
               </Button>
+
+              {error && <div className="text-red-500 text-center text-sm mt-2">{error}</div>}
 
               <div className="text-center">
                 <span className="text-gray-400">Already have an account? </span>

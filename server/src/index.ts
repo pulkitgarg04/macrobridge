@@ -3,10 +3,12 @@ import userRouter from "./router/user";
 import zapRouter from "./router/zap";
 import triggerRouter from "./router/trigger";
 import actionRouter from "./router/action";
+import cors from "cors";
 
 const app = express();
 
 app.use(express.json());
+app.use(cors());
 
 app.get("/", (req, res) => {
     res.send({

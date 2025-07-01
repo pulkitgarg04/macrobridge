@@ -21,9 +21,41 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import Cookies from 'js-cookie';
+
+const SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:8000";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch(`${SERVER_URL}/api/v1/user/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || data.message || "Login failed");
+      } else {
+        Cookies.set('token', data.token, { expires: 7 });
+        // Optionally redirect to dashboard
+        window.location.href = "/dashboard";
+      }
+    } catch (err) {
+      setError("Network error. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-black flex">
@@ -113,6 +145,8 @@ export default function LoginPage() {
                   type="email"
                   placeholder="Enter your email"
                   className="bg-gray-800 border-gray-700 text-white placeholder-gray-400 focus:border-[#F97315] focus:ring-[#F97315]"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
@@ -125,6 +159,8 @@ export default function LoginPage() {
                     type={showPassword ? "text" : "password"}
                     placeholder="Enter your password"
                     className="bg-gray-800 border-gray-700 text-white placeholder-gray-400 focus:border-[#F97315] focus:ring-[#F97315] pr-10"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
                   />
                   <button
                     type="button"
@@ -157,10 +193,10 @@ export default function LoginPage() {
                   Forgot password?
                 </Link>
               </div>
-              <Button className="w-full bg-[#F97315] hover:bg-[#EA580C] text-white cursor-pointer">
-                Login
-                <ArrowRight className="ml-2 h-4 w-4" />
+              <Button className="w-full bg-[#F97315] hover:bg-[#EA580C] text-white cursor-pointer" onClick={handleSubmit} disabled={loading}>
+                {loading ? "Logging in..." : <>Login<ArrowRight className="ml-2 h-4 w-4" /></>}
               </Button>
+              {error && <div className="text-red-500 text-center text-sm mt-2">{error}</div>}
               <div className="text-center">
                 <span className="text-gray-400">Don't have an account? </span>
                 <Link href="/signup" className="text-[#F97315] hover:underline">
