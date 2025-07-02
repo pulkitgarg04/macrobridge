@@ -10,7 +10,7 @@ const app = express();
 
 app.use(express.json());
 app.use(cors({
-  origin: "http://localhost:3000",
+  origin: "https://macrobridge.vercel.app",
   credentials: true,
 }));
 app.use(cookieParser());
@@ -31,6 +31,6 @@ app.use((err: any, req: any, res: any, next: any) => {
   res.status(500).send({ error: "Something went wrong in the server!" });
 });
 
-app.listen(8000, () => {
-  console.log("Server is running on port 8000");
+app.listen(8080, () => {
+  console.log("Server is running on port 8080");
 });

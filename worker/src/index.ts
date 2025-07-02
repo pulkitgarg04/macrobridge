@@ -96,8 +96,11 @@ async function main() {
 
       const zapRunMetadata = zapRun.metadata;
 
+      console.log("Action type: ", currentAction.type.name);
+
       try {
         if (currentAction.type.name === "SendEmail") {
+          console.log("working");
           const body = parse(
             (currentAction.metadata as JsonObject)?.body as string,
             zapRunMetadata

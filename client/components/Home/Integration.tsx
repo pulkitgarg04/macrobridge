@@ -111,10 +111,10 @@ export default function Integration() {
                 rel="noopener noreferrer"
                 className="flex flex-col items-center group"
               >
-                <div className="bg-white/10 rounded-xl p-4 flex items-center justify-center transition group-hover:bg-[#F97315]/20">
+                <div className="bg-white/10 rounded-xl p-4 flex items-center justify-center transition group-hover:bg-white/50">
                   {integration.icon}
                 </div>
-                <span className="mt-3 text-sm text-gray-300 group-hover:text-[#F97315] font-medium">
+                <span className="mt-3 text-sm text-gray-300 group-hover:text-white font-medium">
                   {integration.name}
                 </span>
               </a>

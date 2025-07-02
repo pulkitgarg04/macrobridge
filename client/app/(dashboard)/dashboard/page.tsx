@@ -135,6 +135,7 @@ export default function DashboardPage() {
                             <Button
                               size="icon"
                               variant="ghost"
+                              className="text-white bg-gray-600 hover:bg-gray-500 hover:text-white cursor-pointer"
                               onClick={() => {
                                 navigator.clipboard.writeText(`${HOOKS_URL}/hooks/catch/${zap.userId}/${zap.id}`)
                                 toast.success("Webhook URL copied!")

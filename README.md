@@ -52,10 +52,21 @@ Copy the contents of the `.env.example` file to `.env` file and update the place
 
 4. **Configure database**
    ```bash
-   cd hooks && npx prisma migrate dev
-   cd ../server && npx prisma migrate dev
-   cd ../processor && npx prisma migrate dev
-   cd ../worker && npx prisma migrate dev
+   cd hooks
+   npx prisma generate
+   npx prisma migrate dev
+   
+   cd ../server
+   npx prisma generate
+   npx prisma migrate dev
+
+   cd ../processor
+   npx prisma generate
+   npx prisma migrate dev
+
+   cd ../worker
+   npx prisma generate
+   npx prisma migrate dev
    ```
 
 6. **Start kafka**:
@@ -70,7 +81,7 @@ Copy the contents of the `.env.example` file to `.env` file and update the place
 
    - Create a topic named zap-events:
       ```bash
-      cd /opt/kafka
+      cd /opt/kafka/bin
       ./kafka-topics.sh --create --topic zap-events --bootstrap-server localhost:9092
       ```
 

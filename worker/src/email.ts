@@ -15,6 +15,8 @@ export async function sendEmail(to: string, body: string): Promise<void> {
       throw new Error(`Invalid email or body: to=${to}, body=${body}`);
     }
 
+    console.log("to: ", to, ", body: ", body);
+
     await transport.sendMail({
       from: "project.pulkitgarg@gmail.com",
       sender: "Macrobridge",

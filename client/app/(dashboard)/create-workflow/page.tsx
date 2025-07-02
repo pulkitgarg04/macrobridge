@@ -425,7 +425,7 @@ export default function CreateWorkflowPage() {
                                 </div>
                               </div>
                               <form className="space-y-2 mt-4">
-                                {step.app.name === "Send Email" && (
+                                {step.app.name === "SendEmail" && (
                                   <>
                                     <div>
                                       <Label htmlFor={`email-${step.id}`} className="text-white text-xs">Email</Label>
@@ -457,7 +457,7 @@ export default function CreateWorkflowPage() {
                                     </div>
                                   </>
                                 )}
-                                {step.app.name === "Send Sol" && (
+                                {step.app.name === "SendSol" && (
                                   <>
                                     <div>
                                       <Label htmlFor={`to-${step.id}`} className="text-white text-xs">Recipient</Label>

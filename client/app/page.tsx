@@ -56,13 +56,13 @@ export default function Home() {
                 Join thousands of teams who save time and increase productivity with MacroBridge
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto">
-                <Button size="lg" className="bg-[#F97315] hover:bg-[#EA580C] text-white">
+                <Button size="lg" className="bg-[#F97315] hover:bg-[#EA580C] text-white cursor-pointer">
                   Start Free Trial
                 </Button>
                 <Button
                   size="lg"
                   variant="outline"
-                  className="border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
+                  className="border-gray-700 text-gray-300 bg-gray-600 cursor-pointer"
                 >
                   Schedule Demo
                 </Button>
