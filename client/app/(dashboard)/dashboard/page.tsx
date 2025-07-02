@@ -15,7 +15,7 @@ import {
 import Link from "next/link"
 import toast, { Toaster } from "react-hot-toast"
 
-const HOOKS_URL = process.env.NEXT_PUBLIC_HOOKS_URL || "http://localhost:3002"
+const HOOKS_URL = process.env.NEXT_PUBLIC_HOOKS_URL || "http://localhost:8002"
 
 export default function DashboardPage() {
   const [zaps, setZaps] = useState<any[]>([])
