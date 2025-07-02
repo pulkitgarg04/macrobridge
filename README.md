@@ -101,9 +101,10 @@ Copy the contents of the `.env.example` file to `.env` file and update the place
    npm run start
    ```
 
-
-
 7. Access the application at [http://localhost:3000](http://localhost:3000)
+
+## Workflow
+![workflow](./assets/workflow.png)
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
