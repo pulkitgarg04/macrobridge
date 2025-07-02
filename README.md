@@ -37,19 +37,33 @@ A powerful automation platform that connects your favorite apps and services to 
 5. **Start development servers**
    ```bash
    # Terminal 1: Start frontend
-   cd client && npm run dev
+   cd client && npm run start
    
    # Terminal 2: Start backend
-   cd server && npm run dev
+   cd server && npm run start
    
    # Terminal 3: Start processor
-   cd processor && npm run dev
+   cd processor && npm run start
    
    # Terminal 4: Start worker
-   cd worker && npm run dev
+   cd worker && npm run start
+
+   # Terminal 5: Start hooks
+   cd hooks && npm run start
    ```
 
-6. Open your browser at http://localhost:3000
+6. Run kafka:
+   ```bash
+   docker run -p 9092:9092 apache/kafka:4.0.0
+   docker exec -it <container_id> /bin/bash
+
+   cd /opt/kafka
+   ./kafka-topics.sh --create --topic zap-events --bootstrap-server localhost:9092
+   ```
+
+7. Open your browser at [http://localhost:3000](http://localhost:3000)
+
+## Contributing
 
 
 ## License

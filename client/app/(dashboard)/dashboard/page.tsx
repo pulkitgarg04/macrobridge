@@ -17,7 +17,7 @@ import toast, { Toaster } from "react-hot-toast"
 
 const HOOKS_URL = process.env.NEXT_PUBLIC_HOOKS_URL || "http://localhost:3002"
 
-export default function DashboardPage({ userId }: { userId: string }) {
+export default function DashboardPage() {
   const [zaps, setZaps] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
